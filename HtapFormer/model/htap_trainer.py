@@ -26,7 +26,7 @@ def create_mock_htap_data(batch_size, n_nodes, device='cpu'):
 
 
 def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
+    
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
@@ -55,7 +55,7 @@ def print_qerror(preds_unnorm, labels_unnorm, prints=False):
     return res
 
 
-def get_corr(ps, ls):  # unnormalised
+def get_corr(ps, ls):
     ps = np.array(ps)
     ls = np.array(ls)
     corr, _ = pearsonr(np.log(ps), np.log(ls))
@@ -64,21 +64,6 @@ def get_corr(ps, ls):  # unnormalised
 
 
 def evaluate_htapformer(model, ds, bs, norm, device, prints=False, use_htap=True):
-    """
-    HtapFormer 评估函数
-    
-    Args:
-        model: HtapFormer 模型
-        ds: 数据集
-        bs: batch size
-        norm: Normalizer
-        device: 设备
-        prints: 是否打印结果
-        use_htap: 是否使用 HTAP 特征（False 时等同于 QueryFormer）
-    
-    Returns:
-        scores: 评估指标字典
-    """
     model.eval()
     cost_predss = np.empty(0)
 
@@ -138,13 +123,8 @@ def train_htapformer(model, train_ds, val_ds, crit, norm, args, use_htap=True):
     import torch.optim as optim
     from torch.utils.data import DataLoader
     
-    # 创建优化器
     opt = optim.Adam(model.parameters(), lr=args.lr)
-    
-    # 学习率调度器
     scheduler = optim.lr_scheduler.StepLR(opt, step_size=1, gamma=args.sch_decay)
-    
-    # 创建数据加载器
     train_loader = DataLoader(
         train_ds, 
         batch_size=args.bs, 

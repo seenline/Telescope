@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import csv
 import torch
-
-## bfs shld be enough
 def floyd_warshall_rewrite(adjacency_matrix):
     (nrows, ncols) = adjacency_matrix.shape
     assert nrows == ncols
@@ -26,7 +24,6 @@ def get_job_table_sample(workload_file_name, num_materialized_samples = 1000):
     tables = []
     samples = []
 
-    # Load queries
     with open(workload_file_name + ".csv", 'r') as f:
         data_raw = list(list(rec) for rec in csv.reader(f, delimiter='#'))
         for row in data_raw:
@@ -38,7 +35,6 @@ def get_job_table_sample(workload_file_name, num_materialized_samples = 1000):
 
     print("Loaded queries with len ", len(tables))
     
-    # Load bitmaps
     num_bytes_per_bitmap = int((num_materialized_samples + 7) >> 3)
     with open(workload_file_name + ".bitmaps", 'rb') as f:
         for i in range(len(tables)):
@@ -49,7 +45,6 @@ def get_job_table_sample(workload_file_name, num_materialized_samples = 1000):
             num_bitmaps_curr_query = int.from_bytes(four_bytes, byteorder='little')
             bitmaps = np.empty((num_bitmaps_curr_query, num_bytes_per_bitmap * 8), dtype=np.uint8)
             for j in range(num_bitmaps_curr_query):
-                # Read bitmap
                 bitmap_bytes = f.read(num_bytes_per_bitmap)
                 if not bitmap_bytes:
                     print("Error while reading 'bitmap_bytes'")
@@ -61,7 +56,7 @@ def get_job_table_sample(workload_file_name, num_materialized_samples = 1000):
     for ts, ss in zip(tables,samples):
         d = {}
         for t, s in zip(ts,ss):
-            tf = t.split(' ')[0] # remove alias
+            tf = t.split(' ')[0]
             d[tf] = s
         table_sample.append(d)
     
@@ -151,7 +146,7 @@ class Batch():
 
 
 def pad_1d_unsqueeze(x, padlen):
-    x = x + 1 # pad id = 0
+    x = x + 1
     xlen = x.size(0)
     if xlen < padlen:
         new_x = x.new_zeros([padlen], dtype=x.dtype)
@@ -161,7 +156,6 @@ def pad_1d_unsqueeze(x, padlen):
 
 
 def pad_2d_unsqueeze(x, padlen):
-#    x = x + 1 # pad id = 0
     xlen, xdim = x.size()
     if xlen < padlen:
         new_x = x.new_zeros([padlen, xdim], dtype=x.dtype) + 1
@@ -251,12 +245,9 @@ def formatJoin(json_node):
         join = json_node['Hash Cond']
     elif 'Join Filter' in json_node:
         join = json_node['Join Filter']
-    ## TODO: index cond
     elif 'Index Cond' in json_node and not json_node['Index Cond'][-2].isnumeric():
         join = json_node['Index Cond']
     
-    ## sometimes no alias, say t.id 
-    ## remove repeat (both way are the same)
     if join is not None:
 
         twoCol = join[1:-1].split(' = ')
@@ -320,9 +311,7 @@ class Encoding:
         return val_norm
     
     def encode_filters(self, filters=[], alias=None): 
-        ## filters: list of dict 
-
-#        print(filt, alias)
+        
         if len(filters) == 0:
             return {'colId':[self.col2idx['NA']],
                    'opId': [self.op2idx['NA']],
@@ -332,10 +321,8 @@ class Encoding:
             filt = ''.join(c for c in filt if c not in '()')
             fs = filt.split(' AND ')
             for f in fs:
-     #           print(filters)
                 col, op, num = f.split(' ')
                 column = alias + '.' + col
-    #            print(f)
                 
                 res['colId'].append(self.col2idx[column])
                 res['opId'].append(self.op2idx[op])
@@ -369,11 +356,11 @@ class TreeNode:
         
         self.table = 'NA'
         self.table_id = 0
-        self.query_id = None ## so that sample bitmap can recognise
+        self.query_id = None
         
         self.join = join
         self.join_str = join_str
-        self.card = card #'Actual Rows'
+        self.card = card
         self.children = []
         self.rounds = 0
         
@@ -387,7 +374,6 @@ class TreeNode:
         self.children.append(treeNode)
     
     def __str__(self):
-#        return TreeNode.print_nested(self)
         return '{} with {}, {}, {} children'.format(self.nodeType, self.filter, self.join_str, len(self.children))
 
     def __repr__(self):

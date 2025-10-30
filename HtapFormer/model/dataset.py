@@ -16,7 +16,7 @@ class PlanTreeDataset(Dataset):
         self.hist_file = hist_file
         
         self.length = len(json_df)
-        # train = train.loc[json_df['id']]
+        
         
         nodes = [json.loads(plan)['Plan'] for plan in json_df['json']]
         self.cards = [node['Actual Rows'] for node in nodes]
@@ -32,7 +32,7 @@ class PlanTreeDataset(Dataset):
         elif to_predict == 'card':
             self.gts = self.cards
             self.labels = self.card_labels
-        elif to_predict == 'both': ## try not to use, just in case
+        elif to_predict == 'both':
             self.gts = self.costs
             self.labels = self.cost_labels
         else:
@@ -41,7 +41,7 @@ class PlanTreeDataset(Dataset):
         idxs = list(json_df['id'])
         
     
-        self.treeNodes = [] ## for mem collection
+        self.treeNodes = []
         self.collated_dicts = [self.js_node2dict(i,node) for i,node in zip(idxs, nodes)]
 
     def js_node2dict(self, idx, node):
@@ -64,7 +64,6 @@ class PlanTreeDataset(Dataset):
     def old_getitem(self, idx):
         return self.dicts[idx], (self.cost_labels[idx], self.card_labels[idx])
       
-    ## pre-process first half of old collator
     def pre_collate(self, the_dict, max_node = 30, rel_pos_max = 20):
 
         x = pad_2d_unsqueeze(the_dict['features'], max_node)
@@ -113,8 +112,7 @@ class PlanTreeDataset(Dataset):
         }
     
     def topo_sort(self, root_node):
-#        nodes = []
-        adj_list = [] #from parent to children
+        adj_list = []
         num_child = []
         features = []
 
@@ -123,7 +121,6 @@ class PlanTreeDataset(Dataset):
         next_id = 1
         while toVisit:
             idx, node = toVisit.popleft()
-#            nodes.append(node)
             features.append(node.feature)
             num_child.append(len(node.children))
             for child in node.children:
@@ -133,11 +130,11 @@ class PlanTreeDataset(Dataset):
         
         return adj_list, num_child, features
     
-    def traversePlan(self, plan, idx, encoding): # bfs accumulate plan
+    def traversePlan(self, plan, idx, encoding):
 
         nodeType = plan['Node Type']
         typeId = encoding.encode_type(nodeType)
-        card = None #plan['Actual Rows']
+        card = None
         filters, alias = formatFilter(plan)
         join = formatJoin(plan)
         joinId = encoding.encode_join(join)
@@ -153,7 +150,6 @@ class PlanTreeDataset(Dataset):
         root.query_id = idx
         
         root.feature = node2feature(root, encoding, self.hist_file, self.table_sample)
-        #    print(root)
         if 'Plans' in plan:
             for subplan in plan['Plans']:
                 subplan['parent'] = plan
@@ -188,13 +184,10 @@ class PlanTreeDataset(Dataset):
 
 
 def node2feature(node, encoding, hist_file, table_sample):
-    # type, join, filter123, mask123
-    # 1, 1, 3x3 (9), 3
-    # TODO: add sample (or so-called table)
+    
     num_filter = len(node.filterDict['colId'])
     pad = np.zeros((3,3-num_filter))
-    filts = np.array(list(node.filterDict.values())) #cols, ops, vals
-    ## 3x3 -> 9, get back with reshape 3,3
+    filts = np.array(list(node.filterDict.values()))
     filts = np.concatenate((filts, pad), axis=1).flatten() 
     mask = np.zeros(3)
     mask[:num_filter] = 1
@@ -203,7 +196,6 @@ def node2feature(node, encoding, hist_file, table_sample):
     hists = filterDict2Hist(hist_file, node.filterDict, encoding)
 
 
-    # table, bitmap, 1 + 1000 bits
     table = np.array([node.table_id])
     if node.table_id == 0:
         sample = np.zeros(1000)
