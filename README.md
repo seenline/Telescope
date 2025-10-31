@@ -20,9 +20,9 @@
 
 3. **Create a Python environment and install dependencies.**
 
-4. **Build offline priority metadata .**
+4. **Build offline priority metadata with `e num.py` and `compare.py`.**
 
-5. **Start the Telescope what-if estimator**
+5. **Start the Telescope what-if estimator with `/HtapFormer`**
 
 6. **Run a sample what-if call (predict latency without loading columns).**
 
