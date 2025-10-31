@@ -26,7 +26,7 @@
 
 6. **Run a sample what-if call (predict latency without loading columns).**
 
-2. **Testing Column Selection Code**
+2. **Testing Column Selection Code with  `ILP.py`**
 
 
 
