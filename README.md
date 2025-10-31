@@ -20,7 +20,7 @@
 
 3. **Create a Python environment and install dependencies.**
 
-4. **Build offline priority metadata with `e num.py` and `compare.py`.**
+4. **Build offline priority metadata with `enum.py` and `compare.py`.**
 
 5. **Start the Telescope what-if estimator with `/HtapFormer`**
 
